@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-# TODO +tag @context/location/project 
-# TODO !/!!/!!! priority levels
-# TODO a "shell" function that keeps you in the program anduses os.clear and whatever to cls
+""" A Simple todo manager written in python """ 
 
 import sys
 
@@ -41,13 +39,12 @@ def print_todo(todo_list):
         i += 1
 
 def read_args():
-    """ Get the arguments from the command line and perform appropriate tasks"""
+    """ Get the arguments from the command line and perform appropriate tasks """
     
     todo_list = load_from_file()
     
     # Get only relevant arguments (no file name)
     str_args = ' '.join(sys.argv[1:])
-    
     
     if len(sys.argv) == 1:
         if len(todo_list) == 0:
@@ -55,25 +52,32 @@ def read_args():
         else:
             print_todo(todo_list)
     else:
-        if str_args.startswith('del'): # TODO consider regex for getting numbers?
+        if str_args.startswith('del'): 
             todo_list = del_todo(todo_list, str_args[4:]) 
             print_todo(todo_list)
+            
         elif str_args.startswith('urg'):
             todo_list = mark_task(todo_list, str_args[4:], "!")
             print_todo(todo_list)
+            
         elif str_args.startswith('edit'):
-            pass
+            todo_list = edit_todo(todo_list, str_args[5:])
+            print_todo(todo_list)
+            
         elif str_args.startswith('list'):
             if len(todo_list) == 0:
                 print('You have no todo items!')
             else:
                 print_todo(todo_list)
+                
         elif str_args.startswith('move'): # TODO bettername?
             todo_list = mark_task(todo_list, str_args[5:], ">") 
             print_todo(todo_list)
+            
         elif str_args.startswith('done'): # TODO better name?
             todo_list = mark_task(todo_list, str_args[5:], "X")
             print_todo(todo_list)
+            
         else: # assume that no argument means to add a task
             str_args += "\n"
             todo_list = add_todo(todo_list, str_args)
@@ -88,9 +92,46 @@ def add_todo(todo_list, todo_item):
     return todo_list
     
 
-def edit_todo(todo_list, task_number):
-    """ """
-    pass
+def edit_todo(todo_list, input_str):
+    """ Changes the given todo task """
+    
+    # Separate task number from rest of str 
+    task_number = ''
+    for i in range(len(input_str)):
+         
+        if input_str[i].isdigit():
+            task_number += input_str[i] 
+        elif input_str[i].isalpha(): # First letter char
+            new_text = input_str[i:]
+            break
+    
+    try: 
+        task_number = int(task_number) # TODO needed since we use isdigit?
+        
+        if task_number > len(todo_list):
+            print("That task does not exist.")
+            return todo_list
+        
+        # Change the text, saving the mark if needed
+        mark = ""
+        if todo_list[task_number-1][0] in "X!>":
+            mark = todo_list[task_number-1][0]
+            todo_list[task_number-1] = todo_list[task_number-1][2:]
+            todo_list[task_number-1] = new_text + '\n'
+        else:
+            todo_list[task_number-1] = new_text + '\n'
+        
+        # Give the mark back
+        if mark != "":
+            todo_list[task_number-1] = mark + " " + todo_list[task_number-1] 
+        
+        write_to_file(todo_list)
+
+        return todo_list
+
+    except ValueError: #TODO test this function
+        print("Please enter valid number.")
+        return todo_list
 
 def del_todo(todo_list, task_number):
     """ Removes the given task from the list and writes to disk """
@@ -164,5 +205,7 @@ def mark_task(todo_list, task_number, mark):
 
 if __name__ == "__main__":
 
-    print("Commands are 'move' 'del' 'urg' 'done'") 
     read_args()
+    print("Commands are 'move' 'del' 'urg' 'done' 'edit'") 
+    # todo add 'help' command and 'shell' command
+    
